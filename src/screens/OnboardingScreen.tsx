@@ -222,7 +222,7 @@ export default function OnboardingScreen() {
               style={styles.btn}
               onPress={() => goTo(step + 1)}
             />
-            <TouchableOpacity onPress={completeOnboarding} style={styles.skipBtn}>
+            <TouchableOpacity onPress={() => completeOnboarding()} style={styles.skipBtn}>
               <Text style={styles.skipText}>Pular tudo</Text>
             </TouchableOpacity>
           </>
