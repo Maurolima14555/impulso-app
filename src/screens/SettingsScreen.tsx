@@ -1,12 +1,67 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, StatusBar, Alert, ScrollView, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Switch,
+  StatusBar,
+  Alert,
+  ScrollView,
+  Modal,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { requestNotificationPermissions, scheduleDailyReminders, cancelAllNotifications } from '../lib/notifications';
+import {
+  requestNotificationPermissions,
+  scheduleDailyReminders,
+  cancelAllNotifications,
+} from '../lib/notifications';
 import PaywallScreen from './PaywallScreen';
 import PrivacyPolicyScreen from './PrivacyPolicyScreen';
+import { Colors } from '../theme/colors';
+import { Typography } from '../theme/typography';
+
+type RowProps = {
+  icon: string;
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  chevron?: boolean;
+  danger?: boolean;
+  right?: React.ReactNode;
+};
+
+function Row({ icon, label, value, onPress, chevron = false, danger = false, right }: RowProps) {
+  const content = (
+    <View style={rowStyles.row}>
+      <View style={rowStyles.iconBox}>
+        <Ionicons name={icon as any} size={17} color={danger ? Colors.danger : Colors.textSecondary} />
+      </View>
+      <Text style={[rowStyles.label, danger && rowStyles.labelDanger]}>{label}</Text>
+      <View style={rowStyles.right}>
+        {right ?? (
+          <>
+            {value && <Text style={rowStyles.value}>{value}</Text>}
+            {chevron && <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} style={{ marginLeft: 4 }} />}
+          </>
+        )}
+      </View>
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+  return content;
+}
 
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -23,7 +78,7 @@ export default function SettingsScreen() {
         await scheduleDailyReminders();
       } else {
         setNotificationsEnabled(false);
-        Alert.alert('Permissao negada', 'Ativa as notificacoes nas definicoes do dispositivo.');
+        Alert.alert('Permissão negada', 'Activa as notificações nas definições do dispositivo.');
       }
     } else {
       await cancelAllNotifications();
@@ -33,14 +88,14 @@ export default function SettingsScreen() {
   const handleSignOut = () => {
     Alert.alert('Sair da conta', 'Tens a certeza?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', onPress: () => signOut() },
+      { text: 'Sair', style: 'destructive', onPress: () => signOut() },
     ]);
   };
 
   const handleResetData = () => {
     Alert.alert(
       'Apagar dados',
-      'Tens a certeza? Isto apaga todo o teu progresso.',
+      'Isto apaga todo o teu progresso. Não é reversível.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -48,7 +103,7 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.clear();
-            Alert.alert('Dados apagados', 'Reinicia a app para comecar de novo.');
+            Alert.alert('Feito', 'Reinicia a app para começar de novo.');
           },
         },
       ]
@@ -57,109 +112,109 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f0f0f" />
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Definicoes</Text>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        <Text style={styles.title}>Definições</Text>
 
         {/* Plan */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Plano</Text>
-          {isPro ? (
+        <Text style={styles.sectionLabel}>PLANO</Text>
+        {isPro ? (
+          <View style={styles.group}>
             <View style={styles.proActiveCard}>
-              <Text style={styles.proActiveTitle}>IMPULSO PRO ativo</Text>
-              <Text style={styles.proActiveDesc}>Atividades ilimitadas e todas as features desbloqueadas.</Text>
+              <View style={styles.proActiveBadge}>
+                <Ionicons name="infinite" size={14} color={Colors.bg} />
+                <Text style={styles.proActiveBadgeText}>PRO</Text>
+              </View>
+              <Text style={styles.proActiveTitle}>IMPULSO Pro activo</Text>
+              <Text style={styles.proActiveDesc}>Actividades ilimitadas e todas as features desbloqueadas.</Text>
             </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.upgradeCard}
-              activeOpacity={0.85}
-              onPress={() => setShowPaywall(true)}
-            >
-              <Text style={styles.upgradeTitle}>Upgrade para Pro</Text>
-              <Text style={styles.upgradePrice}>R$14,90/mes ou R$99,90/ano</Text>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.group} onPress={() => setShowPaywall(true)} activeOpacity={0.85}>
+            <View style={styles.upgradeCard}>
+              <View style={styles.upgradeTop}>
+                <View style={styles.upgradeBadge}>
+                  <Text style={styles.upgradeBadgeText}>PRO</Text>
+                </View>
+                <Text style={styles.upgradePrice}>R$14,90/mês · R$99,90/ano</Text>
+              </View>
+              <Text style={styles.upgradeTitle}>Desbloqueia o IMPULSO completo</Text>
               <Text style={styles.upgradeDesc}>
-                Atividades ilimitadas, estatisticas avancadas, temas personalizados e sem anuncios.
+                Actividades ilimitadas, estatísticas avançadas, temas e sync na nuvem.
               </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+              <View style={styles.upgradeArrow}>
+                <Text style={styles.upgradeArrowText}>Ver planos</Text>
+                <Ionicons name="arrow-forward" size={14} color={Colors.accent} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Notifications */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Notificacoes</Text>
-          <View style={styles.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Receber lembretes</Text>
-              <Text style={styles.rowDesc}>Alertas quando passas tempo demais nas redes</Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={handleToggleNotifications}
-              trackColor={{ false: '#374151', true: '#22c55e' }}
-              thumbColor="#ffffff"
-            />
-          </View>
+        <Text style={styles.sectionLabel}>NOTIFICAÇÕES</Text>
+        <View style={styles.group}>
+          <Row
+            icon="notifications-outline"
+            label="Receber lembretes"
+            right={
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={handleToggleNotifications}
+                trackColor={{ false: Colors.border, true: Colors.accent }}
+                thumbColor={Colors.textHighlight}
+                ios_backgroundColor={Colors.border}
+              />
+            }
+          />
         </View>
 
         {/* Account */}
         {isConfigured && user && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Conta</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user.email}</Text>
+          <>
+            <Text style={styles.sectionLabel}>CONTA</Text>
+            <View style={styles.group}>
+              <Row icon="mail-outline" label="Email" value={user.email} />
+              <View style={styles.divider} />
+              <Row icon="log-out-outline" label="Sair da conta" onPress={handleSignOut} danger chevron />
             </View>
-            <TouchableOpacity style={styles.dangerButton} onPress={handleSignOut}>
-              <Text style={styles.dangerText}>Sair da conta</Text>
-            </TouchableOpacity>
-          </View>
+          </>
         )}
 
         {/* Data */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Dados</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Atividades registadas</Text>
-            <Text style={styles.infoValue}>{completedActivities.length}</Text>
-          </View>
-          <TouchableOpacity style={styles.dangerButton} onPress={handleResetData}>
-            <Text style={styles.dangerText}>Apagar todos os dados</Text>
-          </TouchableOpacity>
+        <Text style={styles.sectionLabel}>DADOS</Text>
+        <View style={styles.group}>
+          <Row
+            icon="bar-chart-outline"
+            label="Actividades registadas"
+            value={String(completedActivities.length)}
+          />
+          <View style={styles.divider} />
+          <Row icon="trash-outline" label="Apagar todos os dados" onPress={handleResetData} danger chevron />
         </View>
 
         {/* Legal */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Legal</Text>
-          <TouchableOpacity style={styles.infoRow} onPress={() => setShowPrivacy(true)}>
-            <Text style={styles.infoLabel}>Politica de Privacidade</Text>
-            <Text style={styles.infoArrow}>›</Text>
-          </TouchableOpacity>
+        <Text style={styles.sectionLabel}>LEGAL</Text>
+        <View style={styles.group}>
+          <Row icon="document-text-outline" label="Política de Privacidade" onPress={() => setShowPrivacy(true)} chevron />
         </View>
 
         {/* About */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Sobre</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Versao</Text>
-            <Text style={styles.infoValue}>1.0.0</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Criado por</Text>
-            <Text style={styles.infoValue}>@menteprospera24</Text>
-          </View>
+        <Text style={styles.sectionLabel}>SOBRE</Text>
+        <View style={styles.group}>
+          <Row icon="information-circle-outline" label="Versão" value="1.0.0" />
+          <View style={styles.divider} />
+          <Row icon="logo-instagram" label="Criado por" value="@menteprospera24" />
         </View>
+
       </ScrollView>
 
       <Modal visible={showPaywall} animationType="slide">
         <PaywallScreen
           onClose={() => setShowPaywall(false)}
-          onPurchased={() => {
-            setShowPaywall(false);
-            refreshProStatus();
-          }}
+          onPurchased={() => { setShowPaywall(false); refreshProStatus(); }}
         />
       </Modal>
-
       <Modal visible={showPrivacy} animationType="slide">
         <PrivacyPolicyScreen onClose={() => setShowPrivacy(false)} />
       </Modal>
@@ -168,68 +223,88 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
-  scroll: { paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48 },
-  title: { fontSize: 32, fontWeight: '800', color: '#ffffff', marginBottom: 24 },
-  section: { marginBottom: 32 },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 48 },
+
+  title: { ...Typography.h1, marginBottom: 28 },
+
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-    letterSpacing: 1,
-    marginBottom: 12,
-    textTransform: 'uppercase',
+    ...Typography.label,
+    letterSpacing: 1.5,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    marginTop: 24,
   },
+
+  group: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.borderSubtle,
+    marginLeft: 56,
+  },
+
+  // Upgrade card
+  upgradeCard: {
+    padding: 20,
+  },
+  upgradeTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  upgradeBadge: {
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  upgradeBadgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 2 },
+  upgradePrice: { fontSize: 12, color: Colors.accent, fontWeight: '500' },
+  upgradeTitle: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, marginBottom: 6 },
+  upgradeDesc: { fontSize: 13, color: Colors.textSecondary, lineHeight: 20, marginBottom: 16 },
+  upgradeArrow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  upgradeArrowText: { fontSize: 13, fontWeight: '700', color: Colors.accent },
+
+  // Pro active card
+  proActiveCard: { padding: 20 },
+  proActiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: Colors.accent,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  proActiveBadgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 2 },
+  proActiveTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
+  proActiveDesc: { fontSize: 13, color: Colors.textSecondary, lineHeight: 20 },
+});
+
+const rowStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
   },
-  rowLabel: { fontSize: 16, color: '#ffffff', marginBottom: 2 },
-  rowDesc: { fontSize: 12, color: '#6b7280', maxWidth: 240 },
-  proActiveCard: {
-    backgroundColor: '#052e16',
-    borderRadius: 14,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#22c55e',
-  },
-  proActiveTitle: { fontSize: 18, fontWeight: '800', color: '#22c55e', marginBottom: 4 },
-  proActiveDesc: { fontSize: 14, color: '#4ade80' },
-  upgradeCard: {
-    backgroundColor: '#052e16',
-    borderRadius: 14,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#22c55e',
-  },
-  upgradeTitle: { fontSize: 18, fontWeight: '800', color: '#22c55e', marginBottom: 4 },
-  upgradePrice: { fontSize: 14, color: '#4ade80', marginBottom: 10 },
-  upgradeDesc: { fontSize: 14, color: '#6b7280', lineHeight: 21 },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  iconBox: {
+    width: 28,
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    marginBottom: 8,
   },
-  infoLabel: { fontSize: 15, color: '#ffffff' },
-  infoValue: { fontSize: 15, color: '#6b7280' },
-  infoArrow: { fontSize: 20, color: '#6b7280' },
-  dangerButton: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: '#7f1d1d',
-  },
-  dangerText: { fontSize: 15, color: '#ef4444', textAlign: 'center' },
+  label: { flex: 1, fontSize: 15, color: Colors.textPrimary, fontWeight: '400' },
+  labelDanger: { color: Colors.danger },
+  right: { flexDirection: 'row', alignItems: 'center' },
+  value: { fontSize: 14, color: Colors.textSecondary },
 });

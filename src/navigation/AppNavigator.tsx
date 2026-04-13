@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, StyleSheet } from 'react-native';
+import { colors, typography, spacing } from '../theme';
 
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +15,9 @@ import ActivitiesScreen from '../screens/ActivitiesScreen';
 import StatsScreen from '../screens/StatsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ActivitySessionScreen from '../screens/ActivitySessionScreen';
+import ActivityDetailScreen from '../screens/ActivityDetailScreen';
+import SessionReflectionScreen from '../screens/SessionReflectionScreen';
+import ProgramDetailScreen from '../screens/ProgramDetailScreen';
 import { RootStackParamList, MainTabParamList } from '../types';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -39,8 +43,8 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#22c55e',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: colors.brand.primary,
+        tabBarInactiveTintColor: colors.text.tertiary,
         tabBarLabelStyle: styles.tabLabel,
         tabBarIcon: ({ focused }) => <TabIcon label={route.name} focused={focused} />,
       })}
@@ -83,7 +87,7 @@ export default function AppNavigator() {
   if (!hasOnboarded) {
     return (
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: '#0f0f0f' } }}>
+        <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: colors.bg.base } }}>
           <Stack.Screen name="Auth" component={OnboardingScreen} />
         </Stack.Navigator>
       </NavigationContainer>
@@ -98,11 +102,26 @@ export default function AppNavigator() {
   // Step 3: Main app
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: '#0f0f0f' } }}>
+      <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: colors.bg.base } }}>
         <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen
+          name="ActivityDetail"
+          component={ActivityDetailScreen}
+          options={{ presentation: 'modal' }}
+        />
         <Stack.Screen
           name="ActivitySession"
           component={ActivitySessionScreen}
+          options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="SessionReflection"
+          component={SessionReflectionScreen}
+          options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="ProgramDetail"
+          component={ProgramDetailScreen}
           options={{ presentation: 'modal' }}
         />
       </Stack.Navigator>
@@ -112,16 +131,16 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#141414',
-    borderTopColor: '#1f1f1f',
+    backgroundColor: colors.bg.elevated,
+    borderTopColor: colors.border.subtle,
     borderTopWidth: 1,
     height: 88,
-    paddingTop: 8,
-    paddingBottom: 28,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl + 4,
   },
   tabLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: typography.weight.semibold,
     letterSpacing: 0.2,
   },
   tabIcon: {
